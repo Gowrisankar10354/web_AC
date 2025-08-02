@@ -23,7 +23,7 @@ if (typeof Paho === 'undefined' || typeof Paho.Client === 'undefined') {
 const MQTT_Ctrl = (() => {
     // --- Configuration ---
     const MQTT_BROKER_HOST = 'broker.hivemq.com'; 
-    const MQTT_BROKER_PORT = 8000; 
+    const MQTT_BROKER_PORT = 8080; 
     const MQTT_CLIENT_ID_WEB_PREFIX = 'acWebClient_'; // Fixed: Added missing const
     let mqttClientID = `${MQTT_CLIENT_ID_WEB_PREFIX}${Math.random().toString(16).substr(2, 8)}`; // This was fine
 
@@ -272,4 +272,5 @@ const MQTT_Ctrl = (() => {
         forceDeviceOnlineConfirmation,
         getStatus
     };
+
 })();
