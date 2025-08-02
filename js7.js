@@ -1,4 +1,4 @@
-// js7_main.js (Based on your input_file_0.js structure)
+/*// js7_main.js (Based on your input_file_0.js structure)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- BLE State Variables ---
@@ -641,4 +641,5 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', handleWindowResize);
 
     console.log("Main application setup complete.");
+
 });
