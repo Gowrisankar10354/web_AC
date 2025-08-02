@@ -1,4 +1,4 @@
-// js6_mqtt.js (Fixed version)
+/*// js6_mqtt.js (Fixed version)
 console.log('js6.js: Top - typeof Paho:', typeof Paho);
 if (typeof Paho !== 'undefined') {
     console.log('js6.js: Top - Paho object:', Paho);
@@ -274,4 +274,5 @@ const MQTT_Ctrl = (() => {
     };
 
 })();
+
 
