@@ -51,6 +51,15 @@ body {
 .interactive-button { transition: transform 0.1s ease-out, background-color 0.2s ease, box-shadow 0.2s ease; }
 .interactive-button:hover { filter: brightness(1.1); }
 .interactive-button:active { transform: scale(0.95); filter: brightness(0.9); }
+/* New class to dim the buttons when the AC is off */
+.interactive-button.dimmed {
+    filter: brightness(0.6) !important;
+    cursor: not-allowed;
+}
+/* Revert brightness on hover for dimmed buttons to provide feedback, but still show they're disabled. */
+.interactive-button.dimmed:hover {
+    filter: brightness(0.7) !important;
+}
 
 
 /* App Header */
@@ -140,6 +149,20 @@ body {
     border: 1px solid transparent;
 }
 .fan-speed-level-desktop:first-child { margin-top: 6px; }
+/* Define brightness for each fan speed level */
+.fan-speed-level-desktop[data-speed="LOW"].active-L { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 10px -2px var(--highlight-active), inset 0 0 5px rgba(255,255,255,0.2); transform: scale(1.05); }
+.fan-speed-level-desktop[data-speed="LOW"].active-M { background-color: var(--highlight-filled); filter: brightness(0.9); }
+.fan-speed-level-desktop[data-speed="LOW"].active-H { background-color: var(--highlight-filled); filter: brightness(0.8); }
+.fan-speed-level-desktop[data-speed="LOW"].active-A { background-color: var(--highlight-filled); filter: brightness(0.7); }
+
+.fan-speed-level-desktop[data-speed="MEDIUM"].active-M { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 10px -2px var(--highlight-active), inset 0 0 5px rgba(255,255,255,0.2); transform: scale(1.05); }
+.fan-speed-level-desktop[data-speed="MEDIUM"].active-H { background-color: var(--highlight-filled); filter: brightness(0.9); }
+.fan-speed-level-desktop[data-speed="MEDIUM"].active-A { background-color: var(--highlight-filled); filter: brightness(0.8); }
+
+.fan-speed-level-desktop[data-speed="HIGH"].active-H { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 10px -2px var(--highlight-active), inset 0 0 5px rgba(255,255,255,0.2); transform: scale(1.05); }
+.fan-speed-level-desktop[data-speed="HIGH"].active-A { background-color: var(--highlight-filled); filter: brightness(0.9); }
+
+.fan-speed-level-desktop[data-speed="AUTO"].active-A { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 10px -2px var(--highlight-active), inset 0 0 5px rgba(255,255,255,0.2); transform: scale(1.05); }
 .fan-speed-level-desktop.filled { background-color: var(--highlight-filled); color: var(--bg-primary); }
 .fan-speed-level-desktop.active {
     background-color: var(--highlight-active); color: white;
@@ -162,6 +185,19 @@ body {
     font-weight: 600; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; border: 1px solid transparent;
 }
 .fan-speed-level-mobile:first-child { margin-left: 0; }
+.fan-speed-level-mobile[data-speed-mobile="LOW"].active-L { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 8px -2px var(--highlight-active), inset 0 0 4px rgba(255,255,255,0.15); transform: scale(1.03); }
+.fan-speed-level-mobile[data-speed-mobile="LOW"].active-M { background-color: var(--highlight-filled); filter: brightness(0.9); }
+.fan-speed-level-mobile[data-speed-mobile="LOW"].active-H { background-color: var(--highlight-filled); filter: brightness(0.8); }
+.fan-speed-level-mobile[data-speed-mobile="LOW"].active-A { background-color: var(--highlight-filled); filter: brightness(0.7); }
+
+.fan-speed-level-mobile[data-speed-mobile="MEDIUM"].active-M { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 8px -2px var(--highlight-active), inset 0 0 4px rgba(255,255,255,0.15); transform: scale(1.03); }
+.fan-speed-level-mobile[data-speed-mobile="MEDIUM"].active-H { background-color: var(--highlight-filled); filter: brightness(0.9); }
+.fan-speed-level-mobile[data-speed-mobile="MEDIUM"].active-A { background-color: var(--highlight-filled); filter: brightness(0.8); }
+
+.fan-speed-level-mobile[data-speed-mobile="HIGH"].active-H { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 8px -2px var(--highlight-active), inset 0 0 4px rgba(255,255,255,0.15); transform: scale(1.03); }
+.fan-speed-level-mobile[data-speed-mobile="HIGH"].active-A { background-color: var(--highlight-filled); filter: brightness(0.9); }
+
+.fan-speed-level-mobile[data-speed-mobile="AUTO"].active-A { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 8px -2px var(--highlight-active), inset 0 0 4px rgba(255,255,255,0.15); transform: scale(1.03); }
 .fan-speed-level-mobile.filled { background-color: var(--highlight-filled); color: var(--bg-primary); }
 .fan-speed-level-mobile.active {
     background-color: var(--highlight-active); color: white; border-color: var(--highlight-active);
@@ -173,6 +209,54 @@ body {
     color: var(--text-primary); display: flex; align-items: center; justify-content: center;
 }
 .fan-buttons button:hover { background-color: var(--accent-purple); }
+
+/* Fan speed level styling for automation sections (matches general fan-speed-level-X classes) */
+.fan-speed-level-desktop-auto,
+.fan-speed-level-mobile-auto {
+    flex-grow: 1;
+    height: 100%;
+    margin-left: 0.25rem;
+    border-radius: 0.25rem;
+    background-color: var(--bg-element); /* Ensure background is set here */
+    transition: all 0.2s ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.fan-speed-level-desktop-auto:first-child,
+.fan-speed-level-mobile-auto:first-child {
+    margin-left: 0;
+}
+
+/* Brightness gradient for automation fan levels (desktop and mobile) */
+.fan-speed-level-desktop-auto[data-speed-automation="LOW"].active-L,
+.fan-speed-level-mobile-auto[data-speed-automation="LOW"].active-L { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 8px -2px var(--highlight-active), inset 0 0 4px rgba(255,255,255,0.15); transform: scale(1.03); }
+.fan-speed-level-desktop-auto[data-speed-automation="LOW"].active-M,
+.fan-speed-level-mobile-auto[data-speed-automation="LOW"].active-M { background-color: var(--highlight-filled); filter: brightness(0.9); }
+.fan-speed-level-desktop-auto[data-speed-automation="LOW"].active-H,
+.fan-speed-level-mobile-auto[data-speed-automation="LOW"].active-H { background-color: var(--highlight-filled); filter: brightness(0.8); }
+.fan-speed-level-desktop-auto[data-speed-automation="LOW"].active-A,
+.fan-speed-level-mobile-auto[data-speed-automation="LOW"].active-A { background-color: var(--highlight-filled); filter: brightness(0.7); }
+
+.fan-speed-level-desktop-auto[data-speed-automation="MEDIUM"].active-M,
+.fan-speed-level-mobile-auto[data-speed-automation="MEDIUM"].active-M { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 8px -2px var(--highlight-active), inset 0 0 4px rgba(255,255,255,0.15); transform: scale(1.03); }
+.fan-speed-level-desktop-auto[data-speed-automation="MEDIUM"].active-H,
+.fan-speed-level-mobile-auto[data-speed-automation="MEDIUM"].active-H { background-color: var(--highlight-filled); filter: brightness(0.9); }
+.fan-speed-level-desktop-auto[data-speed-automation="MEDIUM"].active-A,
+.fan-speed-level-mobile-auto[data-speed-automation="MEDIUM"].active-A { background-color: var(--highlight-filled); filter: brightness(0.8); }
+
+.fan-speed-level-desktop-auto[data-speed-automation="HIGH"].active-H,
+.fan-speed-level-mobile-auto[data-speed-automation="HIGH"].active-H { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 8px -2px var(--highlight-active), inset 0 0 4px rgba(255,255,255,0.15); transform: scale(1.03); }
+.fan-speed-level-desktop-auto[data-speed-automation="HIGH"].active-A,
+.fan-speed-level-mobile-auto[data-speed-automation="HIGH"].active-A { background-color: var(--highlight-filled); filter: brightness(0.9); }
+
+.fan-speed-level-desktop-auto[data-speed-automation="AUTO"].active-A,
+.fan-speed-level-mobile-auto[data-speed-automation="AUTO"].active-A { background-color: var(--highlight-active); color: white; border-color: var(--highlight-active); box-shadow: 0 0 8px -2px var(--highlight-active), inset 0 0 4px rgba(255,255,255,0.15); transform: scale(1.03); }
 
 /* Relay Toggles */
 .toggle-label { height: 2rem; width: 3.5rem; border-radius: 1rem; position: relative; }
