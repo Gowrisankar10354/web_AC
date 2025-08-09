@@ -128,13 +128,193 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... (Other UI update functions: updateAcPowerButtonUI, updateAcControlsUI, etc. remain as in your input_file_0.js)
     function updateAcPowerButtonUI(powerButtonEl, isPowered) { if(powerButtonEl) { powerButtonEl.classList.toggle('bg-red-600', !isPowered); powerButtonEl.classList.toggle('hover:bg-red-500', !isPowered); powerButtonEl.classList.toggle('power-button-on', isPowered); } }
     function updateAcControlsUI(tempDisplayEl, modeIconEl, temp, modeIndex, isPowered = true) { if (tempDisplayEl) tempDisplayEl.textContent = temp; if (modeIconEl) { const mode = acModes[modeIndex]; modeIconEl.innerHTML = `<i class="fas ${mode.icon} ${mode.color}"></i>`; modeIconEl.querySelector('i')?.classList.toggle('mode-active', isPowered); } }
-    function updateFanSpeedUIDesktop() { const currentSpeedIdx = fanSpeedCycleOrder.indexOf(currentFanSpeed); fanSpeedVisualDesktop.forEach((speed, visualIdx) => { const el = dom.fanDesktop.levels[speed]; if (!el) return; el.classList.remove('active', 'filled'); if (isPowerOn) { if (visualIdx <= currentSpeedIdx) el.classList.add('filled'); if (speed === currentFanSpeed) el.classList.add('active'); } }); }
-    function updateFanSpeedUIMobile() { const currentSpeedIdx = fanSpeedCycleOrder.indexOf(currentFanSpeed); fanSpeedVisualMobile.forEach((speed, visualIdx) => { const el = dom.fanMobile.levels[speed]; if (!el) return; el.classList.remove('active', 'filled'); if (isPowerOn) { if (visualIdx <= currentSpeedIdx) el.classList.add('filled'); if (speed === currentFanSpeed) el.classList.add('active'); } }); }
+    function updateFanSpeedUIDesktop() { const currentSpeedIdx = fanSpeedCycleOrder.indexOf(currentFanSpeed); fanSpeedVisualDesktop.forEach((speed, visualIdx) => { const el = dom.fanDesktop.levels[speed]; if (!el) return; el.classList.remove('active', 'filled'); if (isPowerOn) { if (visualIdx <= currentSpeedIdx) el.classList.add('filled'); if (speed === currentFanSpeed) el.classList.add('active'); } }); fanSpeedVisualDesktop.forEach(s => { 
+            const el = dom.fanDesktop.levels[s];
+            if(el) {
+                el.classList.remove('active-L', 'active-M', 'active-H', 'active-A'); 
+                el.style.backgroundColor = ''; 
+                el.style.boxShadow = '';
+                el.style.borderColor = '';
+                el.style.transform = '';
+                el.style.filter = '';
+            }
+        });
+
+        if (isPowerOn) {
+            const activeSpeed = currentFanSpeed;
+
+            if (activeSpeed === 'LOW') {
+                dom.fanDesktop.levels['LOW'].classList.add('active-L');
+            } else if (activeSpeed === 'MEDIUM') {
+                dom.fanDesktop.levels['LOW'].classList.add('active-M');
+                dom.fanDesktop.levels['MEDIUM'].classList.add('active-M');
+            } else if (activeSpeed === 'HIGH') {
+                dom.fanDesktop.levels['LOW'].classList.add('active-H');
+                dom.fanDesktop.levels['MEDIUM'].classList.add('active-H');
+                dom.fanDesktop.levels['HIGH'].classList.add('active-H');
+            } else if (activeSpeed === 'AUTO') {
+                dom.fanDesktop.levels['LOW'].classList.add('active-A');
+                dom.fanDesktop.levels['MEDIUM'].classList.add('active-A');
+                dom.fanDesktop.levels['HIGH'].classList.add('active-A');
+                dom.fanDesktop.levels['AUTO'].classList.add('active-A');
+            }
+        }
+    }
+    function updateFanSpeedUIMobile() { const currentSpeedIdx = fanSpeedCycleOrder.indexOf(currentFanSpeed); fanSpeedVisualMobile.forEach((speed, visualIdx) => { const el = dom.fanMobile.levels[speed]; if (!el) return; el.classList.remove('active', 'filled'); if (isPowerOn) { if (visualIdx <= currentSpeedIdx) el.classList.add('filled'); if (speed === currentFanSpeed) el.classList.add('active'); } }); fanSpeedVisualMobile.forEach(s => {
+            const el = dom.fanMobile.levels[s];
+            if(el) {
+                el.classList.remove('active-L', 'active-M', 'active-H', 'active-A');
+                el.style.backgroundColor = '';
+                el.style.boxShadow = '';
+                el.style.borderColor = '';
+                el.style.transform = '';
+                el.style.filter = '';
+            }
+        });
+
+        if (isPowerOn) {
+            const activeSpeed = currentFanSpeed;
+
+            if (activeSpeed === 'LOW') {
+                dom.fanMobile.levels['LOW'].classList.add('active-L');
+            } else if (activeSpeed === 'MEDIUM') {
+                dom.fanMobile.levels['LOW'].classList.add('active-M');
+                dom.fanMobile.levels['MEDIUM'].classList.add('active-M');
+            } else if (activeSpeed === 'HIGH') {
+                dom.fanMobile.levels['LOW'].classList.add('active-H');
+                dom.fanMobile.levels['MEDIUM'].classList.add('active-H');
+                dom.fanMobile.levels['HIGH'].classList.add('active-H');
+            } else if (activeSpeed === 'AUTO') {
+                dom.fanMobile.levels['LOW'].classList.add('active-A');
+                dom.fanMobile.levels['MEDIUM'].classList.add('active-A');
+                dom.fanMobile.levels['HIGH'].classList.add('active-A');
+                dom.fanMobile.levels['AUTO'].classList.add('active-A');
+            }
+        }
+    }
     function updateRelaysSection(relayElementsDesktop, relayElementsMobile) { for (const relayId in relayStates) { if(relayElementsDesktop[relayId]) relayElementsDesktop[relayId].checked = relayStates[relayId]; if(relayElementsMobile[relayId]) relayElementsMobile[relayId].checked = relayStates[relayId]; } }
     function updateEnvironmentSection(envElementsDesktop, envElementsMobile) { if(envElementsDesktop.temp) envElementsDesktop.temp.innerHTML = `${roomTemperature}<span class="text-base font-normal"> °C</span>`; if(envElementsDesktop.humidity) envElementsDesktop.humidity.innerHTML = `${roomHumidity}<span class="text-base font-normal"> %</span>`; if(envElementsMobile.temp) envElementsMobile.temp.innerHTML = `${roomTemperature}<span class="text-base font-normal"> °C</span>`; if(envElementsMobile.humidity) envElementsMobile.humidity.innerHTML = `${roomHumidity}<span class="text-base font-normal"> %</span>`; }
-    function updateAutomationUI() { if (dom.automation.fixedBtnMobile) { dom.automation.fixedBtnMobile.classList.toggle('active-automation', currentAutomationType === 'fixed'); dom.automation.oscillationBtnMobile.classList.toggle('active-automation', currentAutomationType === 'oscillation'); } if (dom.automation.fixedBtnDesktop) { dom.automation.fixedBtnDesktop.classList.toggle('active-automation', currentAutomationType === 'fixed'); dom.automation.oscillationBtnDesktop.classList.toggle('active-automation', currentAutomationType === 'oscillation'); } if (dom.automation.fixedSettingsMobile) { dom.automation.fixedSettingsMobile.classList.toggle('visible', currentAutomationType === 'fixed'); dom.automation.fixedSettingsMobile.style.display = currentAutomationType === 'fixed' ? '' : 'none'; dom.automation.oscillationSettingsMobile.classList.toggle('visible', currentAutomationType === 'oscillation'); dom.automation.oscillationSettingsMobile.style.display = currentAutomationType === 'oscillation' ? '' : 'none'; } if (dom.automation.fixedSettingsDesktop) { dom.automation.fixedSettingsDesktop.classList.toggle('visible', currentAutomationType === 'fixed'); dom.automation.fixedSettingsDesktop.style.display = currentAutomationType === 'fixed' ? '' : 'none'; dom.automation.oscillationSettingsDesktop.classList.toggle('visible', currentAutomationType === 'oscillation'); dom.automation.oscillationSettingsDesktop.style.display = currentAutomationType === 'oscillation' ? '' : 'none'; } const fixedConf = automationConfigs.fixed; updateAcControlsUI(dom.automation.fixedTempDisplayMobile, dom.automation.fixedModeIconMobile, fixedConf.temp, fixedConf.modeIndex, true); if (dom.automation.fixedTimeMobile) dom.automation.fixedTimeMobile.value = fixedConf.time; updateAutomationFanSpeedUI(fixedConf.fan, dom.automation.fanSpeedLevelsFixedMobile); updateAcControlsUI(dom.automation.fixedTempDisplayDesktop, dom.automation.fixedModeIconDesktop, fixedConf.temp, fixedConf.modeIndex, true); if (dom.automation.fixedTimeDesktop) dom.automation.fixedTimeDesktop.value = fixedConf.time; updateAutomationFanSpeedUI(fixedConf.fan, dom.automation.fanSpeedLevelsFixedDesktop); const oscConf = automationConfigs.oscillation; updateAcControlsUI(dom.automation.oscillationTempDisplayMobile, dom.automation.oscillationModeIconMobile, oscConf.temp, oscConf.modeIndex, true); if (dom.automation.oscillationOnTimeMobile) dom.automation.oscillationOnTimeMobile.value = oscConf.on_time; if (dom.automation.oscillationOffTimeMobile) dom.automation.oscillationOffTimeMobile.value = oscConf.off_time; updateAutomationFanSpeedUI(oscConf.fan, dom.automation.fanSpeedLevelsOscillationMobile); updateAcControlsUI(dom.automation.oscillationTempDisplayDesktop, dom.automation.oscillationModeIconDesktop, oscConf.temp, oscConf.modeIndex, true); if (dom.automation.oscillationOnTimeDesktop) dom.automation.oscillationOnTimeDesktop.value = oscConf.on_time; if (dom.automation.oscillationOffTimeDesktop) dom.automation.oscillationOffTimeDesktop.value = oscConf.off_time; updateAutomationFanSpeedUI(oscConf.fan, dom.automation.fanSpeedLevelsOscillationDesktop); }
-    function updateAutomationFanSpeedUI(selectedFanSpeed, fanLevelsElements) { fanLevelsElements.forEach(el => { const speed = el.dataset.speedAutomation; el.classList.remove('active', 'filled'); const selectedIdx = fanSpeedCycleOrder.indexOf(selectedFanSpeed); const currentIdx = fanSpeedCycleOrder.indexOf(speed); if (currentIdx <= selectedIdx) el.classList.add('filled'); if (speed === selectedFanSpeed) el.classList.add('active'); }); }
-    function updateAllUIs() { updateAcPowerButtonUI(dom.ac.power, isPowerOn); updateAcPowerButtonUI(dom.acMobile.power, isPowerOn); updateAcControlsUI(dom.ac.tempDisplay, dom.ac.modeIcon, currentTemp, currentModeIndex, isPowerOn); updateAcControlsUI(dom.acMobile.tempDisplay, dom.acMobile.modeIcon, currentTemp, currentModeIndex, isPowerOn); updateFanSpeedUIDesktop(); updateFanSpeedUIMobile(); updateRelaysSection(dom.relaysDesktop, dom.relaysMobile); updateEnvironmentSection(dom.envDesktop, dom.envMobile); updateAutomationUI(); }
+    // Helper function to update a specific automation settings panel
+// This consolidates the repetitive logic from the main function.
+function _updateAutomationSettingsUI(config, tempDisplay, modeIcon, fanLevels, timeInput, onTimeInput, offTimeInput) {
+    if (tempDisplay && modeIcon) {
+        updateAcControlsUI(tempDisplay, modeIcon, config.temp, config.modeIndex, true);
+    }
+    if (fanLevels) {
+        updateAutomationFanSpeedUI(config.fan, fanLevels);
+    }
+    if (timeInput) {
+        timeInput.value = config.time;
+    }
+    if (onTimeInput) {
+        onTimeInput.value = config.on_time;
+    }
+    if (offTimeInput) {
+        offTimeInput.value = config.off_time;
+    }
+}
+
+// The main function, now refactored to be cleaner and more efficient
+function updateAutomationUI() {
+    // Update the button and panel visibility. This part is already well-structured.
+    if (dom.automation.fixedBtnMobile) {
+        dom.automation.fixedBtnMobile.classList.toggle('active-automation', currentAutomationType === 'fixed');
+        dom.automation.oscillationBtnMobile.classList.toggle('active-automation', currentAutomationType === 'oscillation');
+    }
+    if (dom.automation.fixedBtnDesktop) {
+        dom.automation.fixedBtnDesktop.classList.toggle('active-automation', currentAutomationType === 'fixed');
+        dom.automation.oscillationBtnDesktop.classList.toggle('active-automation', currentAutomationType === 'oscillation');
+    }
+    if (dom.automation.fixedSettingsMobile) {
+        dom.automation.fixedSettingsMobile.classList.toggle('visible', currentAutomationType === 'fixed');
+        dom.automation.fixedSettingsMobile.style.display = currentAutomationType === 'fixed' ? '' : 'none';
+        dom.automation.oscillationSettingsMobile.classList.toggle('visible', currentAutomationType === 'oscillation');
+        dom.automation.oscillationSettingsMobile.style.display = currentAutomationType === 'oscillation' ? '' : 'none';
+    }
+    if (dom.automation.fixedSettingsDesktop) {
+        dom.automation.fixedSettingsDesktop.classList.toggle('visible', currentAutomationType === 'fixed');
+        dom.automation.fixedSettingsDesktop.style.display = currentAutomationType === 'fixed' ? '' : 'none';
+        dom.automation.oscillationSettingsDesktop.classList.toggle('visible', currentAutomationType === 'oscillation');
+        dom.automation.oscillationSettingsDesktop.style.display = currentAutomationType === 'oscillation' ? '' : 'none';
+    }
+
+    // Refactored logic to update the content of the active panel only once.
+    const fixedConf = automationConfigs.fixed;
+    const oscConf = automationConfigs.oscillation;
+
+    if (currentAutomationType === 'fixed') {
+        _updateAutomationSettingsUI(
+            fixedConf,
+            dom.automation.fixedTempDisplayMobile,
+            dom.automation.fixedModeIconMobile,
+            dom.automation.fanSpeedLevelsFixedMobile,
+            dom.automation.fixedTimeMobile
+        );
+        _updateAutomationSettingsUI(
+            fixedConf,
+            dom.automation.fixedTempDisplayDesktop,
+            dom.automation.fixedModeIconDesktop,
+            dom.automation.fanSpeedLevelsFixedDesktop,
+            dom.automation.fixedTimeDesktop
+        );
+    } else if (currentAutomationType === 'oscillation') {
+        _updateAutomationSettingsUI(
+            oscConf,
+            dom.automation.oscillationTempDisplayMobile,
+            dom.automation.oscillationModeIconMobile,
+            dom.automation.fanSpeedLevelsOscillationMobile,
+            null, // timeInput is not used for oscillation
+            dom.automation.oscillationOnTimeMobile,
+            dom.automation.oscillationOffTimeMobile
+        );
+        _updateAutomationSettingsUI(
+            oscConf,
+            dom.automation.oscillationTempDisplayDesktop,
+            dom.automation.oscillationModeIconDesktop,
+            dom.automation.fanSpeedLevelsOscillationDesktop,
+            null, // timeInput is not used for oscillation
+            dom.automation.oscillationOnTimeDesktop,
+            dom.automation.oscillationOffTimeDesktop
+        );
+    }
+}
+    function updateAutomationFanSpeedUI(selectedFanSpeed, fanLevelsElements) { fanLevelsElements.forEach(el => { const speed = el.dataset.speedAutomation; el.classList.remove('active', 'filled'); const selectedIdx = fanSpeedCycleOrder.indexOf(selectedFanSpeed); const currentIdx = fanSpeedCycleOrder.indexOf(speed); if (currentIdx <= selectedIdx) el.classList.add('filled'); if (speed === selectedFanSpeed) el.classList.add('active'); }); fanLevelsElements.forEach(el => {
+            el.classList.remove('active-L', 'active-M', 'active-H', 'active-A');
+            el.style.backgroundColor = '';
+            el.style.boxShadow = '';
+            el.style.borderColor = '';
+            el.style.transform = '';
+            el.style.filter = '';
+        });
+
+        const fanSpeeds = {
+            'LOW': ['LOW'],
+            'MEDIUM': ['LOW', 'MEDIUM'],
+            'HIGH': ['LOW', 'MEDIUM', 'HIGH'],
+            'AUTO': ['LOW', 'MEDIUM', 'HIGH', 'AUTO']
+        };
+
+        if (selectedFanSpeed && fanSpeeds[selectedFanSpeed]) {
+            const activeSpeeds = fanSpeeds[selectedFanSpeed];
+            fanLevelsElements.forEach(el => {
+                const speed = el.dataset.speedAutomation;
+                if (activeSpeeds.includes(speed)) {
+                    el.classList.add(`active-${selectedFanSpeed.charAt(0).toUpperCase()}`);
+                }
+            });
+        }
+    }
+    function updateAllUIs() { updateAcPowerButtonUI(dom.ac.power, isPowerOn); updateAcPowerButtonUI(dom.acMobile.power, isPowerOn); updateAcControlsUI(dom.ac.tempDisplay, dom.ac.modeIcon, currentTemp, currentModeIndex, isPowerOn); updateAcControlsUI(dom.acMobile.tempDisplay, dom.acMobile.modeIcon, currentTemp, currentModeIndex, isPowerOn); updateFanSpeedUIDesktop(); updateFanSpeedUIMobile(); updateRelaysSection(dom.relaysDesktop, dom.relaysMobile); updateEnvironmentSection(dom.envDesktop, dom.envMobile); updateAutomationUI(); updateAcPowerButtonUI(dom.ac.power, isPowerOn); 
+    updateAcPowerButtonUI(dom.acMobile.power, isPowerOn); 
+    updateAcControlsUI(dom.ac.tempDisplay, dom.ac.modeIcon, currentTemp, currentModeIndex, isPowerOn); 
+    updateAcControlsUI(dom.acMobile.tempDisplay, dom.acMobile.modeIcon, currentTemp, currentModeIndex, isPowerOn); 
+    updateFanSpeedUIDesktop(); 
+    updateFanSpeedUIMobile(); 
+    updateRelaysSection(dom.relaysDesktop, dom.relaysMobile); 
+    updateEnvironmentSection(dom.envDesktop, dom.envMobile); 
+    updateAutomationUI();
+    // Call the new function to update the button brightness based on the power state
+    updateAcButtonBrightness(isPowerOn); }
     function showStatusPopup(message) { dom.statusPopupMessage.textContent = message; dom.statusPopup.classList.add('visible'); }
     function hideStatusPopup() { dom.statusPopup.classList.remove('visible'); }
     dom.closeStatusPopup.addEventListener('click', hideStatusPopup);
@@ -142,7 +322,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeTooltip = null; function toggleTooltip(button) { const tooltip = button.querySelector('.info-tooltip'); if (!tooltip) return; if (activeTooltip && activeTooltip !== tooltip) activeTooltip.classList.remove('visible'); tooltip.classList.toggle('visible'); activeTooltip = tooltip.classList.contains('visible') ? tooltip : null; }
     document.addEventListener('click', (e) => { if (activeTooltip) { const clickedOnButton = e.target.closest('.info-button'); const clickedOnTooltip = e.target.closest('.info-tooltip'); if (!clickedOnTooltip && !clickedOnButton) { activeTooltip.classList.remove('visible'); activeTooltip = null; } else if (clickedOnButton && clickedOnButton.querySelector('.info-tooltip') === activeTooltip) e.stopPropagation(); }});
     infoButtons.forEach(button => { button.addEventListener('click', (e) => { e.stopPropagation(); toggleTooltip(button); }); });
-
+    function updateAcButtonBrightness(isPowered) {
+        // Desktop buttons
+        dom.ac.tempDown.classList.toggle('dimmed', !isPowered);
+        dom.ac.tempUp.classList.toggle('dimmed', !isPowered);
+        dom.ac.mode.classList.toggle('dimmed', !isPowered);
+        // Mobile buttons
+        dom.acMobile.tempDown.classList.toggle('dimmed', !isPowered);
+        dom.acMobile.tempUp.classList.toggle('dimmed', !isPowered);
+        dom.acMobile.mode.classList.toggle('dimmed', !isPowered);
+    }
 
     // --- Connection Orchestration ---
     async function initiateConnectionProcess() {
@@ -585,8 +774,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Automation "Apply" Button Listeners
     dom.automation.applyFixedSettingsMobile?.addEventListener('click', async () => { if (!isConnectedAndReadyForUserAction()){showStatusPopup("Connect device first.");return;} if (!confirm('Apply Fixed schedule (Mobile)?')) { showStatusPopup('Cancelled.'); return; } await applyAutomationSchedule('fixed'); });
     dom.automation.applyOscillationSettingsMobile?.addEventListener('click', async () => { if (!isConnectedAndReadyForUserAction()){showStatusPopup("Connect device first.");return;} if (!confirm('Apply Oscillation schedule (Mobile)?')) { showStatusPopup('Cancelled.'); return; } await applyAutomationSchedule('oscillation'); });
-    dom.automation.applyFixedSettingsDesktop?.addEventListener('click', async () => { if (!isConnectedAndReadyForUserAction()){showStatusPopup("Connect device first.");return;} await applyAutomationSchedule('fixed'); });
-    dom.automation.applyOscillationSettingsDesktop?.addEventListener('click', async () => {  if (!isConnectedAndReadyForUserAction()){showStatusPopup("Connect device first.");return;} await applyAutomationSchedule('oscillation'); });
+    dom.automation.applyFixedSettingsDesktop?.addEventListener('click', async () => { if (!isConnectedAndReadyForUserAction()){showStatusPopup("Connect device first.");return;} if (!confirm('Apply Fixed schedule (Desktop)?')) { showStatusPopup('Cancelled.'); return; } await applyAutomationSchedule('fixed'); });
+    dom.automation.applyOscillationSettingsDesktop?.addEventListener('click', async () => {  if (!isConnectedAndReadyForUserAction()){showStatusPopup("Connect device first.");return;} if (!confirm('Apply Oscillation schedule (Desktop)?')) { showStatusPopup('Cancelled.'); return; } await applyAutomationSchedule('oscillation'); });
 
     // Shutdown Handler
     const handleShutdownClick = async (e) => { e.preventDefault(); if (!isConnectedAndReadyForUserAction()) { showStatusPopup("Please connect to a device first."); return; } if (confirm('Are you sure you want to SHUTDOWN the ESP32 device?')) { if(!await sendShutdownCommand()) { /* Error msg handled by sendCommand */ } else { showStatusPopup("Shutdown command sent to ESP32.");}}};
@@ -641,6 +830,4 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', handleWindowResize);
 
     console.log("Main application setup complete.");
-
 });
-
