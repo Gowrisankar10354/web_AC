@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css6.css"> <!-- Link to your external CSS file -->
+    <link rel="stylesheet" href="css.css"> <!-- Link to your external CSS file -->
 </head>
 <body class="min-h-screen flex flex-col items-center antialiased">
 
@@ -58,6 +58,8 @@
             <div class="w-8"></div> <!-- Spacer for balance -->
         </div>
 
+        
+
         <!-- DESKTOP GRID CONTAINER -->
         <div id="desktopGridContainer" class="desktop-layout-grid hidden md:grid">
              <!-- AC Controls: Card for Desktop -->
@@ -104,6 +106,7 @@
             <section class="card justify-center" id="environmentDesktopContainer">
                 <h2 class="section-title">Room Environment</h2>
                 <div class="grid grid-cols-2 gap-4 text-center">
+                    <!-- Original Temp and Humidity -->
                     <div class="p-4 bg-gray-700/80 rounded-lg">
                         <i class="fas fa-thermometer-half text-3xl mb-1.5 highlight-active-text"></i>
                         <div id="roomTempValueDesktop" class="text-2xl font-bold">0<span class="text-base">°C</span></div>
@@ -113,6 +116,17 @@
                         <i class="fas fa-tint text-3xl mb-1.5 text-sky-400"></i>
                         <div id="roomHumidityValueDesktop" class="text-2xl font-bold">0<span class="text-base">%</span></div>
                         <div class="text-xs mt-0.5 text-gray-400">Humidity</div>
+                    </div>
+                    <!-- New Gas and Pressure -->
+                    <div class="p-4 bg-gray-700/80 rounded-lg">
+                        <i class="fas fa-wind text-3xl mb-1.5 text-green-400"></i>
+                        <div id="gasValueDesktop" class="text-2xl font-bold">0</div>
+                        <div class="text-xs mt-0.5 text-gray-400">Gas</div>
+                    </div>
+                    <div class="p-4 bg-gray-700/80 rounded-lg">
+                        <i class="fas fa-tachometer-alt text-3xl mb-1.5 text-orange-400"></i>
+                        <div id="pressureValueDesktop" class="text-2xl font-bold">0</div>
+                        <div class="text-xs mt-0.5 text-gray-400">Pressure</div>
                     </div>
                 </div>
             </section>
@@ -131,6 +145,32 @@
                      <div class="flex items-center justify-between p-3 bg-gray-700/80 rounded-md">
                         <span class="text-sm font-medium flex items-center"><i class="fas fa-plug mr-2 text-emerald-400"></i>Aux Outlet</span>
                          <div class="relative inline-block align-middle"><input type="checkbox" id="relay3ToggleDesktop" class="toggle-checkbox absolute opacity-0 w-0 h-0"/><label for="relay3ToggleDesktop" class="toggle-label block cursor-pointer bg-element-color"><span class="toggle-circle block bg-white"></span></label></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" id="additionalSensorsDesktopContainer">
+                <h2 class="section-title">Additional Sensors</h2>
+                <div class="flex flex-col justify-center h-full space-y-4 text-center">
+                    <div class="p-3 bg-gray-700/80 rounded-lg">
+                        <i class="fas fa-bolt text-3xl mb-1.5 text-yellow-400"></i>
+                        <div id="powerValueDesktop" class="text-2xl font-bold">0<span class="text-base"> W</span></div>
+                        <div class="text-xs mt-0.5 text-gray-400">Power</div>
+                    </div>
+                    <div class="p-3 bg-gray-700/80 rounded-lg">
+                        <i class="fas fa-smog text-3xl mb-1.5 text-purple-400"></i>
+                        <div id="pm1ValueDesktop" class="text-2xl font-bold">0<span class="text-base"> µg/m³</span></div>
+                        <div class="text-xs mt-0.5 text-gray-400">PM 1.0</div>
+                    </div>
+                    <div class="p-3 bg-gray-700/80 rounded-lg">
+                        <i class="fas fa-smog text-3xl mb-1.5 text-purple-400"></i>
+                        <div id="pm25ValueDesktop" class="text-2xl font-bold">0<span class="text-base"> µg/m³</span></div>
+                        <div class="text-xs mt-0.5 text-gray-400">PM 2.5</div>
+                    </div>
+                    <div class="p-3 bg-gray-700/80 rounded-lg">
+                        <i class="fas fa-smog text-3xl mb-1.5 text-purple-400"></i>
+                        <div id="pm10ValueDesktop" class="text-2xl font-bold">0<span class="text-base"> µg/m³</span></div>
+                        <div class="text-xs mt-0.5 text-gray-400">PM 10</div>
                     </div>
                 </div>
             </section>
@@ -313,17 +353,58 @@
             </div>
 
             <div id="environmentMobilePage" class="mobile-page-container">
+                          
                 <section class="card"><h2 class="section-title">Room Statistics</h2>
                     <div class="grid grid-cols-1 gap-3 text-center flex-grow content-center">
-                        <div class="py-5 bg-gray-700/80 rounded-lg">
-                            <i class="fas fa-thermometer-half text-3xl mb-1.5 highlight-active-text"></i>
-                            <div id="roomTempValueMobile" class="text-2xl font-bold">0<span class="text-base">°C</span></div>
-                            <div class="text-xs mt-0.5 text-secondary-color">Temperature</div>
+                        <!-- Mobile Layout for Environment with increased height -->
+                        <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-bolt text-xl mr-3 text-yellow-400"></i>
+                                <span class="text-sm text-secondary-color">Power</span>
+                            </div>
+                            <div id="powerValueMobile" class="text-lg font-bold">0<span class="text-sm font-normal"> W</span></div>
                         </div>
-                        <div class="py-5 bg-gray-700/80 rounded-lg">
-                            <i class="fas fa-tint text-3xl mb-1.5 text-sky-400"></i>
-                            <div id="roomHumidityValueMobile" class="text-2xl font-bold">0<span class="text-base">%</span></div>
-                            <div class="text-xs mt-0.5 text-secondary-color">Humidity</div>
+                        <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-thermometer-half text-xl mr-3 highlight-active-text"></i>
+                                <span class="text-sm text-secondary-color">Temperature</span>
+                            </div>
+                            <div id="roomTempValueMobile" class="text-lg font-bold">0<span class="text-sm font-normal">°C</span></div>
+                        </div>
+                        <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-tint text-xl mr-3 text-sky-400"></i>
+                                <span class="text-sm text-secondary-color">Humidity</span>
+                            </div>
+                            <div id="roomHumidityValueMobile" class="text-lg font-bold">0<span class="text-sm font-normal">%</span></div>
+                        </div>
+                        <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-wind text-xl mr-3 text-green-400"></i>
+                                <span class="text-sm text-secondary-color">Gas</span>
+                            </div>
+                            <div id="gasValueMobile" class="text-lg font-bold">0</div>
+                        </div>
+                         <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-smog text-xl mr-3 text-purple-400"></i>
+                                <span class="text-sm text-secondary-color">PM 1.0</span>
+                            </div>
+                            <div id="pm1ValueMobile" class="text-lg font-bold">0<span class="text-sm font-normal"> µg/m³</span></div>
+                        </div>
+                        <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-smog text-xl mr-3 text-purple-400"></i>
+                                <span class="text-sm text-secondary-color">PM 2.5</span>
+                            </div>
+                            <div id="pm25ValueMobile" class="text-lg font-bold">0<span class="text-sm font-normal"> µg/m³</span></div>
+                        </div>
+                        <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-smog text-xl mr-3 text-purple-400"></i>
+                                <span class="text-sm text-secondary-color">PM 10</span>
+                            </div>
+                            <div id="pm10ValueMobile" class="text-lg font-bold">0<span class="text-sm font-normal"> µg/m³</span></div>
                         </div>
                     </div>
                 </section>
@@ -471,12 +552,11 @@
     } else {
         console.error('HTML inline: Paho is UNDEFINED immediately after its script tag!');
     }</script>
-    <script src="js6.js"></script>
+    <script src="js9.js"></script>
     
-    <script src="js7.js"></script>
+    <script src="js10.js"></script>
      <!-- Link to your external JavaScript file -->
 
      
 </body>
 </html>
-
