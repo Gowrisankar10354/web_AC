@@ -14,6 +14,10 @@
 
     <!-- Global App Header -->
     <header id="appHeaderGlobal">
+        <div id="gasAlertIndicator" class="gas-alert-indicator">
+            <i class="fas fa-biohazard"></i>
+        </div>
+
         <h1 class="header-title">Smart Control Hub</h1>
         <p class="header-subtitle">Manage your environment effortlessly via ESP32-S3 (BLE)</p>
         <div class="status-display-header">
@@ -76,7 +80,7 @@
                         <div class="text-center">
                             <div id="currentModeIconDesktop" class="currentModeIcon text-4xl mb-0.5 h-12 flex items-center justify-center"><i class="fas fa-snowflake text-sky-400"></i></div>
                             <div id="tempDisplayDesktop" class="temp-display-val text-5xl font-bold">24</div>
-                            <div class="text-xs mt-0.5 text-secondary-color">°C</div>
+                            <div id="activeModeNameDesktop" class="text-xs mt-0.5 text-secondary-color">COOL</div>
                         </div>
                         <button id="tempUpButtonDesktop" class="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white interactive-button text-2xl"><i class="fas fa-plus"></i></button>
                     </div>
@@ -152,22 +156,28 @@
             <section class="card" id="additionalSensorsDesktopContainer">
                 <h2 class="section-title">Additional Sensors</h2>
                 <div class="flex flex-col justify-center h-full space-y-4 text-center">
-                    <div class="p-3 bg-gray-700/80 rounded-lg">
+                    <div class="p-2 bg-gray-700/80 rounded-lg">
                         <i class="fas fa-bolt text-3xl mb-1.5 text-yellow-400"></i>
                         <div id="powerValueDesktop" class="text-2xl font-bold">0<span class="text-base"> W</span></div>
                         <div class="text-xs mt-0.5 text-gray-400">Power</div>
                     </div>
-                    <div class="p-3 bg-gray-700/80 rounded-lg">
+                    <div class="p-2 bg-gray-700/80 rounded-lg">
+                        <i class="fas fa-plug-circle-check text-3xl mb-1.5 text-cyan-400"></i>
+                        <div id="netPowerValueDesktop" class="text-2xl font-bold">0<span class="text-base"> kWh</span></div>
+                        <div class="text-xs mt-0.5 text-gray-400">Total Used</div>
+                    </div>
+
+                    <div class="p-2 bg-gray-700/80 rounded-lg">
                         <i class="fas fa-smog text-3xl mb-1.5 text-purple-400"></i>
                         <div id="pm1ValueDesktop" class="text-2xl font-bold">0<span class="text-base"> µg/m³</span></div>
                         <div class="text-xs mt-0.5 text-gray-400">PM 1.0</div>
                     </div>
-                    <div class="p-3 bg-gray-700/80 rounded-lg">
+                    <div class="p-2 bg-gray-700/80 rounded-lg">
                         <i class="fas fa-smog text-3xl mb-1.5 text-purple-400"></i>
                         <div id="pm25ValueDesktop" class="text-2xl font-bold">0<span class="text-base"> µg/m³</span></div>
                         <div class="text-xs mt-0.5 text-gray-400">PM 2.5</div>
                     </div>
-                    <div class="p-3 bg-gray-700/80 rounded-lg">
+                    <div class="p-2 bg-gray-700/80 rounded-lg">
                         <i class="fas fa-smog text-3xl mb-1.5 text-purple-400"></i>
                         <div id="pm10ValueDesktop" class="text-2xl font-bold">0<span class="text-base"> µg/m³</span></div>
                         <div class="text-xs mt-0.5 text-gray-400">PM 10</div>
@@ -309,7 +319,7 @@
                             <div class="text-center">
                                 <div id="currentModeIconMobile" class="currentModeIcon text-4xl mb-0.5 h-12 flex justify-center items-center"><i class="fas fa-snowflake text-sky-400"></i></div>
                                 <div id="tempDisplayMobile" class="temp-display-val text-5xl font-bold">24</div>
-                                <div class="text-xs mt-0.5 text-secondary-color">°C</div>
+                                <div id="activeModeNameMobile" class="text-xs mt-0.5 text-secondary-color">COOL</div>
                             </div>
                             <button id="tempUpButtonMobile" class="w-14 h-14 rounded-full bg-emerald-600 text-white interactive-button text-2xl"><i class="fas fa-plus"></i></button>
                         </div>
@@ -364,6 +374,14 @@
                             </div>
                             <div id="powerValueMobile" class="text-lg font-bold">0<span class="text-sm font-normal"> W</span></div>
                         </div>
+                        <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-plug-circle-check text-xl mr-3 text-cyan-400"></i>
+                                <span class="text-sm text-secondary-color">Net_power_Cons</span>
+                            </div>
+                            <div id="netPowerValueMobile" class="text-lg font-bold">0<span class="text-sm font-normal"> kWh</span></div>
+                        </div>
+
                         <div class="py-5 bg-gray-700/80 rounded-lg flex items-center justify-between px-4">
                             <div class="flex items-center">
                                 <i class="fas fa-thermometer-half text-xl mr-3 highlight-active-text"></i>
