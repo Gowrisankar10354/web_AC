@@ -1,4 +1,4 @@
-// js7_main.js (Based on your input_file_0.js structure)
+// js10_main.js (Based on your input_file_0.js structure)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- BLE State Variables ---
@@ -14,14 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Application State ---
     const relayMapping = { relay1: "light", relay2: "fan", relay3: "aux" };
     let currentTemp = 24, currentModeIndex = 0, isPowerOn = false;
-    const acModes = [ { name: "COOL", icon: "fa-snowflake", color: "text-sky-400" }, { name: "DRY",  icon: "fa-water", color: "text-teal-400" }, { name: "HEAT", icon: "fa-sun", color: "text-yellow-400" }, { name: "FAN",  icon: "fa-fan", color: "text-gray-500" } ];
+    const acModes = [ { name: "COOL", icon: "fa-snowflake", color: "text-sky-400" }, { name: "DRY",  icon: "fa-water", color: "text-teal-400" }, { name: "HEAT", icon: "fa-sun", color: "text-yellow-400" }, { name: "FAN",  icon: "fa-fan", color: "text-gray-500" }, { name: "AUTO",  icon: "fa-arrows-rotate", color: "text-teal-400" } ];
     const fanSpeedCycleOrder = ["LOW", "MEDIUM", "HIGH", "AUTO"];
     // Visuals for desktop and mobile can be same or different if UI desires
     const fanSpeedVisualDesktop = ["LOW", "MEDIUM", "HIGH", "AUTO"];
     const fanSpeedVisualMobile = ["LOW", "MEDIUM", "HIGH", "AUTO"];
     let currentFanSpeed = fanSpeedCycleOrder[0];
     let relayStates = { relay1: false, relay2: false, relay3: false };
-    let roomTemperature = 0, roomHumidity = 0, gas = 0, pressure = 0, power = 0, pm1 = 0, pm2_5 = 0, pm10 = 0; 
+    let roomTemperature = 0, roomHumidity = 0, gas = 0, pressure = 0, power = 0, pm1 = 0, pm2_5 = 0, pm10 = 0, net_power_cons = 0;
+    const GAS_ALERT_THRESHOLD = 1000; // Set your desired gas level for the alert
     let currentAutomationType = 'fixed';
     let automationConfigs = { fixed: { temp: 24, modeIndex: 0, fan: fanSpeedCycleOrder[0], time: "00:00" }, oscillation: { temp: 24, modeIndex: 0, fan: fanSpeedCycleOrder[0], on_time: "00:00", off_time: "00:00" } };
     let currentCommunicationMode = 'none'; // 'ble', 'mqtt', 'none', or 'mqtt_connecting'
@@ -80,6 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.automation.fixedBtnDesktop = document.getElementById('fixedAutomationBtnDesktop'); dom.automation.oscillationBtnDesktop = document.getElementById('oscillationAutomationBtnDesktop'); dom.automation.fixedSettingsDesktop = document.getElementById('fixedAutomationSettingsDesktop'); dom.automation.oscillationSettingsDesktop = document.getElementById('oscillationAutomationSettingsDesktop'); dom.automation.fixedTempDisplayDesktop = document.getElementById('fixedTempDisplayDesktop'); dom.automation.fixedModeIconDesktop = document.getElementById('fixedModeIconDesktop'); dom.automation.fixedTimeDesktop = document.getElementById('fixedTimeDesktop'); dom.automation.applyFixedSettingsDesktop = document.getElementById('applyFixedSettingsDesktop'); dom.automation.oscillationOnTimeDesktop = document.getElementById('oscillationOnTimeDesktop'); dom.automation.oscillationOffTimeDesktop = document.getElementById('oscillationOffTimeDesktop'); dom.automation.oscillationTempDisplayDesktop = document.getElementById('oscillationTempDisplayDesktop'); dom.automation.oscillationModeIconDesktop = document.getElementById('oscillationModeIconDesktop'); dom.automation.applyOscillationSettingsDesktop = document.getElementById('applyOscillationSettingsDesktop');
     dom.automation.fanSpeedLevelsFixedDesktop = Array.from(document.querySelectorAll('#fixedAutomationSettingsDesktop .fan-speed-level-desktop-auto'));
     dom.automation.fanSpeedLevelsOscillationDesktop = Array.from(document.querySelectorAll('#oscillationAutomationSettingsDesktop .fan-speed-level-desktop-auto'));
+    // Add to the main dom object
+    dom.gasAlertIndicator = document.getElementById('gasAlertIndicator');
+    // Add to the envDesktop object
+    dom.envDesktop.netPower = document.getElementById('netPowerValueDesktop');
+    // Add to the envMobile object
+    dom.envMobile.netPower = document.getElementById('netPowerValueMobile');
     const infoButtons = document.querySelectorAll('.info-button');
 
 
@@ -141,7 +148,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ... (Other UI update functions: updateAcPowerButtonUI, updateAcControlsUI, etc. remain as in your input_file_0.js)
     function updateAcPowerButtonUI(powerButtonEl, isPowered) { if(powerButtonEl) { powerButtonEl.classList.toggle('bg-red-600', !isPowered); powerButtonEl.classList.toggle('hover:bg-red-500', !isPowered); powerButtonEl.classList.toggle('power-button-on', isPowered); } }
-    function updateAcControlsUI(tempDisplayEl, modeIconEl, temp, modeIndex, isPowered = true) { if (tempDisplayEl) tempDisplayEl.textContent = temp; if (modeIconEl) { const mode = acModes[modeIndex]; modeIconEl.innerHTML = `<i class="fas ${mode.icon} ${mode.color}"></i>`; modeIconEl.querySelector('i')?.classList.toggle('mode-active', isPowered); } }
+    function updateAcControlsUI(tempDisplayEl, modeIconEl, temp, modeIndex, isPowered = true) { 
+        if (tempDisplayEl) tempDisplayEl.textContent = temp;
+        if (modeIconEl) {
+            const mode = acModes[modeIndex];
+            modeIconEl.innerHTML = `<i class="fas ${mode.icon} ${mode.color}"></i>`;
+            modeIconEl.querySelector('i')?.classList.toggle('mode-active', isPowered);
+        }
+        // Update the mode name display for desktop
+        const modeNameElDesktop = document.getElementById('activeModeNameDesktop');
+        if (modeNameElDesktop) modeNameElDesktop.textContent = acModes[modeIndex].name;
+        // Update the mode name display for mobile
+        const modeNameElMobile = document.getElementById('activeModeNameMobile');
+        if (modeNameElMobile) modeNameElMobile.textContent = acModes[modeIndex].name;
+    }
     function updateFanSpeedUIDesktop() { const currentSpeedIdx = fanSpeedCycleOrder.indexOf(currentFanSpeed); fanSpeedVisualDesktop.forEach((speed, visualIdx) => { const el = dom.fanDesktop.levels[speed]; if (!el) return; el.classList.remove('active', 'filled'); if (isPowerOn) { if (visualIdx <= currentSpeedIdx) el.classList.add('filled'); if (speed === currentFanSpeed) el.classList.add('active'); } }); fanSpeedVisualDesktop.forEach(s => { 
             const el = dom.fanDesktop.levels[s];
             if(el) {
@@ -207,12 +227,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     function updateRelaysSection(relayElementsDesktop, relayElementsMobile) { for (const relayId in relayStates) { if(relayElementsDesktop[relayId]) relayElementsDesktop[relayId].checked = relayStates[relayId]; if(relayElementsMobile[relayId]) relayElementsMobile[relayId].checked = relayStates[relayId]; } }
-    function updateEnvironmentSection(envElementsDesktop, envElementsMobile) { // Desktop UI
+    function updateEnvironmentSection(envElementsDesktop, envElementsMobile) {
+        // Desktop UI
         if(dom.envDesktop.temp) dom.envDesktop.temp.innerHTML = `${roomTemperature}<span class="text-base">°C</span>`;
         if(dom.envDesktop.humidity) dom.envDesktop.humidity.innerHTML = `${roomHumidity}<span class="text-base">%</span>`;
         if(dom.envDesktop.gas) dom.envDesktop.gas.textContent = gas;
         if(dom.envDesktop.pressure) dom.envDesktop.pressure.textContent = pressure;
         if(dom.envDesktop.power) dom.envDesktop.power.innerHTML = `${power}<span class="text-sm font-normal"> W</span>`;
+        if(dom.envDesktop.netPower) dom.envDesktop.netPower.innerHTML = `${net_power_cons}<span class="text-base"> kWh</span>`;
         if(dom.envDesktop.pm1) dom.envDesktop.pm1.innerHTML = `${pm1}<span class="text-sm font-normal"> µg/m³</span>`;
         if(dom.envDesktop.pm25) dom.envDesktop.pm25.innerHTML = `${pm2_5}<span class="text-sm font-normal"> µg/m³</span>`;
         if(dom.envDesktop.pm10) dom.envDesktop.pm10.innerHTML = `${pm10}<span class="text-sm font-normal"> µg/m³</span>`;
@@ -222,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(dom.envMobile.humidity) dom.envMobile.humidity.innerHTML = `${roomHumidity}<span class="text-sm font-normal">%</span>`;
         if(dom.envMobile.gas) dom.envMobile.gas.textContent = gas;
         if(dom.envMobile.power) dom.envMobile.power.innerHTML = `${power}<span class="text-sm font-normal"> W</span>`;
+        if(dom.envMobile.netPower) dom.envMobile.netPower.innerHTML = `${net_power_cons}<span class="text-sm font-normal"> kWh</span>`;
         if(dom.envMobile.pm1) dom.envMobile.pm1.innerHTML = `${pm1}<span class="text-sm font-normal"> µg/m³</span>`;
         if(dom.envMobile.pm25) dom.envMobile.pm25.innerHTML = `${pm2_5}<span class="text-sm font-normal"> µg/m³</span>`;
         if(dom.envMobile.pm10) dom.envMobile.pm10.innerHTML = `${pm10}<span class="text-sm font-normal"> µg/m³</span>`;
@@ -245,6 +268,15 @@ function _updateAutomationSettingsUI(config, tempDisplay, modeIcon, fanLevels, t
         offTimeInput.value = config.off_time;
     }
 }
+
+    function updateGasAlertUI() {
+        if (gas > GAS_ALERT_THRESHOLD) {
+            dom.gasAlertIndicator.classList.add('active');
+        } else {
+            dom.gasAlertIndicator.classList.remove('active');
+        }
+    }
+
 
 // The main function, now refactored to be cleaner and more efficient
 function updateAutomationUI() {
@@ -336,17 +368,17 @@ function updateAutomationUI() {
             });
         }
     }
-    function updateAllUIs() { updateAcPowerButtonUI(dom.ac.power, isPowerOn); updateAcPowerButtonUI(dom.acMobile.power, isPowerOn); updateAcControlsUI(dom.ac.tempDisplay, dom.ac.modeIcon, currentTemp, currentModeIndex, isPowerOn); updateAcControlsUI(dom.acMobile.tempDisplay, dom.acMobile.modeIcon, currentTemp, currentModeIndex, isPowerOn); updateFanSpeedUIDesktop(); updateFanSpeedUIMobile(); updateRelaysSection(dom.relaysDesktop, dom.relaysMobile); updateEnvironmentSection(dom.envDesktop, dom.envMobile); updateAutomationUI(); updateAcPowerButtonUI(dom.ac.power, isPowerOn); 
-    updateAcPowerButtonUI(dom.acMobile.power, isPowerOn); 
-    updateAcControlsUI(dom.ac.tempDisplay, dom.ac.modeIcon, currentTemp, currentModeIndex, isPowerOn); 
-    updateAcControlsUI(dom.acMobile.tempDisplay, dom.acMobile.modeIcon, currentTemp, currentModeIndex, isPowerOn); 
-    updateFanSpeedUIDesktop(); 
-    updateFanSpeedUIMobile(); 
-    updateRelaysSection(dom.relaysDesktop, dom.relaysMobile); 
-    updateEnvironmentSection(dom.envDesktop, dom.envMobile); 
-    updateAutomationUI();
-    // Call the new function to update the button brightness based on the power state
-    updateAcButtonBrightness(isPowerOn); }
+    function updateAllUIs() {
+        updateAcPowerButtonUI(dom.ac.power, isPowerOn);
+        updateAcPowerButtonUI(dom.acMobile.power, isPowerOn);
+        updateAcControlsUI(dom.ac.tempDisplay, dom.ac.modeIcon, currentTemp, currentModeIndex, isPowerOn);
+        updateAcControlsUI(dom.acMobile.tempDisplay, dom.acMobile.modeIcon, currentTemp, currentModeIndex, isPowerOn);
+        updateFanSpeedUIDesktop();
+        updateFanSpeedUIMobile();
+        updateRelaysSection(dom.relaysDesktop, dom.relaysMobile);
+        updateEnvironmentSection();
+        updateGasAlertUI(); // Call the new gas alert function
+    }
     function showStatusPopup(message) { dom.statusPopupMessage.textContent = message; dom.statusPopup.classList.add('visible'); }
     function hideStatusPopup() { dom.statusPopup.classList.remove('visible'); }
     dom.closeStatusPopup.addEventListener('click', hideStatusPopup);
@@ -633,7 +665,7 @@ function updateAutomationUI() {
 
 
     // --- Common Data Processing ---
-    function processIncomingDeviceData(jsonDataString) {
+        function processIncomingDeviceData(jsonDataString) {
         try {
             const data = JSON.parse(jsonDataString);
 
@@ -648,8 +680,7 @@ function updateAutomationUI() {
                 Object.keys(data.relay_states).forEach(key => { const dRN = key.toLowerCase(); const mIRID = Object.keys(relayMapping).find(id => relayMapping[id] === dRN); if (mIRID && relayStates.hasOwnProperty(mIRID)) { relayStates[mIRID] = (data.relay_states[key] === "ON"); } });
             }
 
-            // NEW: Process all sensor data if it exists in the payload
-            // This assumes the ESP32 sends a single JSON with a "sensors" object
+            // Process all sensor data
             if (data.type === "sensor_update" && data.sensors) {
                 const sensors = data.sensors;
                 if (sensors.temperature !== undefined) roomTemperature = parseFloat(sensors.temperature).toFixed(1);
@@ -660,6 +691,7 @@ function updateAutomationUI() {
                 if (sensors.pm1 !== undefined) pm1 = parseInt(sensors.pm1);
                 if (sensors.pm2_5 !== undefined) pm2_5 = parseInt(sensors.pm2_5);
                 if (sensors.pm10 !== undefined) pm10 = parseInt(sensors.pm10);
+                if (sensors.net_power_cons !== undefined) net_power_cons = parseFloat(sensors.net_power_cons).toFixed(3);
             }
 
         } catch (error) {
@@ -668,6 +700,7 @@ function updateAutomationUI() {
             updateAllUIs(); // Always refresh UI after processing data
         }
     }
+
     
     function resetDeviceStateAndUI() {
         console.log("Main: Resetting device state and UI.");
