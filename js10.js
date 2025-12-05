@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let automationConfigs = { fixed: { temp: 24, modeIndex: 0, fan: fanSpeedCycleOrder[0], time: "00:00" }, oscillation: { temp: 24, modeIndex: 0, fan: fanSpeedCycleOrder[0], on_time: "00:00", off_time: "00:00" } };
     let currentCommunicationMode = 'none'; // 'ble', 'mqtt', 'none', or 'mqtt_connecting'
 
+    // --- Shared Fan Speed State ---
+    let fanSpeedPercent = 0; // 0-100, shared by both desktop and mobile
+
     // --- DOM Elements ---
     const dom = {
         statusDot: document.getElementById('connectionStatusDot'),
@@ -892,4 +895,304 @@ function updateAutomationUI() {
     window.addEventListener('resize', handleWindowResize);
 
     console.log("Main application setup complete.");
+
+
+
+(function() {
+    // --- State & Config ---
+    const State = {
+        fanSpeedPercent: 0,
+        displaySpeed: 0,
+        isDragging: false,
+        isInteractActive: false,
+        activeIsMobile: true, // Tracks WHICH gauge initiated the touch
+        lastSentSpeed: -1
+    };
+
+    const Config = {
+        desk: { center: 150, radius: 100, startAngle: 135, endAngle: 405, sweep: 270 },
+        mob: { center: 120, radius: 80, startAngle: 135, endAngle: 405, sweep: 270 }
+    };
+
+    // --- Elements ---
+    const Els = {
+        desk: {
+            svg: document.getElementById('gauge-svg'),
+            trackBg: document.getElementById('track-bg'),
+            trackActive: document.getElementById('track-active'),
+            knob: document.getElementById('knob'),
+            text: document.getElementById('speed-text'),
+            container: document.getElementById('gauge-container'),
+            btns: [document.getElementById('btn-low'), document.getElementById('btn-high')]
+        },
+        mob: {
+            svg: document.getElementById('gauge-svg-mobile'),
+            trackBg: document.getElementById('track-bg-mobile'),
+            trackActive: document.getElementById('track-active-mobile'),
+            knob: document.getElementById('knob-mobile'),
+            text: document.getElementById('speed-text-mobile'),
+            container: document.getElementById('gauge-container-mobile'),
+            btns: [document.getElementById('btn-low-mobile'), document.getElementById('btn-high-mobile')]
+        }
+    };
+
+    // --- Logic Helpers ---
+    function polarToCartesian(cx, cy, r, degrees) {
+        const rad = (degrees * Math.PI) / 180;
+        return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    }
+
+    function describeArc(x, y, r, start, end) {
+        const s = polarToCartesian(x, y, r, end);
+        const e = polarToCartesian(x, y, r, start);
+        const large = end - start <= 180 ? '0' : '1';
+        return ['M', s.x, s.y, 'A', r, r, 0, large, 0, e.x, e.y].join(' ');
+    }
+
+    function getValFromPointer(clientX, clientY, isMobile) {
+        const conf = isMobile ? Config.mob : Config.desk;
+        const el = isMobile ? Els.mob.svg : Els.desk.svg;
+        
+        if (!el) return undefined;
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return undefined;
+
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        // Radii hit test (Deadzone check)
+        // If NOT dragging, be STRICT (must hit ring).
+        // If dragging, be RELAXED (can be anywhere).
+        const minR = isMobile ? 30 : 50;
+        const maxR = isMobile ? 120 : 150;
+
+        if (!State.isDragging && (dist < minR || dist > maxR)) return undefined;
+
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        if (angle < 0) angle += 360;
+
+        let relAngle = angle - conf.startAngle;
+        if (relAngle < 0) relAngle += 360;
+
+        if (relAngle > conf.sweep) {
+            if (relAngle < conf.sweep + (360 - conf.sweep) / 2) relAngle = conf.sweep;
+            else relAngle = 0;
+        }
+
+        const pct = Math.round((relAngle / conf.sweep) * 100);
+        return Math.max(0, Math.min(100, pct));
+    }
+
+// --- Simple Node ---
+class Node {
+    constructor(value) {
+        this.value = value;
+        this.next = null;
+    }
+}
+
+// --- Clean Fixed-Size LinkedList ---
+class SpeedLinkedList {
+    constructor(maxSize = 10) {
+        this.head = null;
+        this.tail = null;
+        this.size = 0;
+        this.maxSize = maxSize;
+    }
+
+    add(value) {
+        const node = new Node(value);
+
+        // Add new node
+        if (!this.head) {
+            this.head = this.tail = node;
+        } else {
+            this.tail.next = node;
+            this.tail = node;
+        }
+
+        this.size++;
+
+        // Delete oldest node if limit exceeded
+        if (this.size > this.maxSize) {
+            let old = this.head;       // save reference
+            this.head = this.head.next; // drop oldest node
+            old.next = null;            // fully disconnect node
+            old.value = null;           // allow GC to free memory
+            this.size--;
+        }
+    }
+
+    getLast() {
+        return this.tail ? this.tail.value : null;
+    }
+}
+
+const speedList = new SpeedLinkedList(10);
+
+function sendFanSpeed(percent) {
+    const speedValue = percent;
+    const lastValue = speedList.getLast();
+
+    if (lastValue !== speedValue) {
+        const command = {
+            type: "relay",
+            relay: "relay2",
+            value: speedValue > 0 ? "ON" : "OFF",
+            speed: String(speedValue)
+        };
+        sendCommand?.(command);
+    }
+
+    speedList.add(speedValue);
+}
+
+
+    function updateVisuals(percent) {
+        const p = Math.max(0, Math.min(100, percent));
+        
+        // Update Desktop
+        if (Els.desk.svg) {
+            const ang = Config.desk.startAngle + (Config.desk.sweep * p) / 100;
+            Els.desk.trackActive.setAttribute('d', describeArc(Config.desk.center, Config.desk.center, Config.desk.radius, Config.desk.startAngle, ang));
+            const pos = polarToCartesian(Config.desk.center, Config.desk.center, Config.desk.radius, ang);
+            Els.desk.knob.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
+            Els.desk.text.textContent = Math.round(p);
+        }
+
+        // Update Mobile
+        if (Els.mob.svg) {
+            const ang = Config.mob.startAngle + (Config.mob.sweep * p) / 100;
+            Els.mob.trackActive.setAttribute('d', describeArc(Config.mob.center, Config.mob.center, Config.mob.radius, Config.mob.startAngle, ang));
+            const pos = polarToCartesian(Config.mob.center, Config.mob.center, Config.mob.radius, ang);
+            Els.mob.knob.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
+            Els.mob.text.textContent = Math.round(p);
+        }
+
+        // Update Buttons
+        const target = Math.round(State.fanSpeedPercent);
+        const toggleBtn = (btns, isActive) => {
+            btns.forEach(b => {
+                if(!b) return;
+                if(isActive) b.classList.add('button-active');
+                else b.classList.remove('button-active');
+            });
+        };
+        toggleBtn(Els.desk.btns, false); // Clear first
+        toggleBtn(Els.mob.btns, false);
+        
+        if (target === 0) {
+            if(Els.desk.btns[0]) Els.desk.btns[0].classList.add('button-active');
+            if(Els.mob.btns[0]) Els.mob.btns[0].classList.add('button-active');
+        }
+        if (target === 100) {
+            if(Els.desk.btns[1]) Els.desk.btns[1].classList.add('button-active');
+            if(Els.mob.btns[1]) Els.mob.btns[1].classList.add('button-active');
+        }
+    }
+
+    function animate() {
+        if (State.isDragging) {
+            State.displaySpeed = State.fanSpeedPercent;
+        } else {
+            const diff = State.fanSpeedPercent - State.displaySpeed;
+            if (Math.abs(diff) > 0.5) {
+                State.displaySpeed += diff * 0.15;
+            } else {
+                State.displaySpeed = State.fanSpeedPercent;
+            }
+        }
+        updateVisuals(State.displaySpeed);
+        requestAnimationFrame(animate);
+    }
+
+    // --- Inputs ---
+    function handleInputStart(e, isMobile) {
+        if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
+        
+        // IMPORTANT: We do NOT set isDragging = true here.
+        // This ensures the strict radius check (Deadzone) runs in getValFromPointer.
+        
+        const x = e.touches ? e.touches[0].clientX : e.clientX;
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const val = getValFromPointer(x, y, isMobile);
+        if (val !== undefined) {
+            State.isInteractActive = true;
+            State.activeIsMobile = isMobile; // Lock to gauge
+            State.fanSpeedPercent = val;
+            
+            if(isMobile) Els.mob.knob.classList.add('cursor-grabbing');
+            else Els.desk.knob.classList.add('cursor-grabbing');
+        }
+    }
+
+    function handleInputMove(e) {
+        if (!State.isInteractActive) return;
+        
+        // NOW we are dragging. This enables loose checking.
+        State.isDragging = true;
+        
+        const x = e.touches ? e.touches[0].clientX : e.clientX;
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const val = getValFromPointer(x, y, State.activeIsMobile);
+        if (val !== undefined) {
+            State.fanSpeedPercent = val;
+        }
+    }
+
+    function handleInputEnd() {
+        if (State.isInteractActive) {
+            State.isInteractActive = false;
+            State.isDragging = false;
+            
+            Els.desk.knob.classList.remove('cursor-grabbing');
+            Els.mob.knob.classList.remove('cursor-grabbing');
+            
+            sendFanSpeed(State.fanSpeedPercent);
+        }
+    }
+
+    // Attach Events
+    function attach(el, isMobile) {
+        if (!el) return;
+        el.addEventListener('mousedown', e => handleInputStart(e, isMobile));
+        el.addEventListener('touchstart', e => handleInputStart(e, isMobile), {passive: false});
+    }
+
+    attach(Els.desk.container, false);
+    attach(Els.mob.container, true);
+
+    window.addEventListener('mousemove', handleInputMove);
+    window.addEventListener('touchmove', e => {
+        if(State.isInteractActive) e.preventDefault();
+        handleInputMove(e);
+    }, {passive: false});
+    
+    window.addEventListener('mouseup', handleInputEnd);
+    window.addEventListener('touchend', handleInputEnd);
+
+    // Buttons
+    const setPreset = (val) => {
+        State.fanSpeedPercent = val;
+        sendFanSpeed(val);
+    };
+
+    [...Els.desk.btns, ...Els.mob.btns].forEach(btn => {
+        if (btn && btn.innerText.includes('LOW')) btn.addEventListener('click', () => setPreset(0));
+        if (btn && btn.innerText.includes('HIGH')) btn.addEventListener('click', () => setPreset(100));
+    });
+
+    // Init
+    if (Els.desk.trackBg) Els.desk.trackBg.setAttribute('d', describeArc(Config.desk.center, Config.desk.center, Config.desk.radius, Config.desk.startAngle, Config.desk.endAngle));
+    if (Els.mob.trackBg) Els.mob.trackBg.setAttribute('d', describeArc(Config.mob.center, Config.mob.center, Config.mob.radius, Config.mob.startAngle, Config.mob.endAngle));
+    
+    animate();
+
+})();
 });
