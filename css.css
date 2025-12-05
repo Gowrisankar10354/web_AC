@@ -554,3 +554,92 @@ input[type="time"]::-webkit-datetime-edit {
         right: 0.75rem;
     }
 }
+
+   /* --- Gauge & Layout Styles --- */
+    .card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 1rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+        color: white;
+        text-align: center;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    /* Desktop Gauge */
+    #gauge-container {
+        width: 100%;
+        max-width: 220px;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* Mobile Gauge */
+    #gauge-container-mobile {
+        width: 100%;
+        max-width: 240px;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* SVG Styles */
+    svg {
+        overflow: visible;
+        display: block;
+    }
+
+    .cursor-grab { cursor: grab; }
+    .cursor-grabbing { cursor: grabbing; }
+
+    /* --- Theme & Glow Effects (Purple #a78bfa) --- */
+    #track-active, #track-active-mobile {
+        transition: filter 0.3s ease;
+        filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6)); /* Purple glow */
+    }
+
+    #knob circle:nth-child(2),
+    #knob-mobile circle:nth-child(2) {
+        filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.8));
+    }
+
+    /* Button Styles */
+    .btn-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(4px);
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        transition: all 0.2s ease;
+        color: #e9d5ff; /* purple-100 */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+    }
+
+    .btn-control:active {
+        transform: scale(0.95);
+    }
+
+    /* Active State (Glow) */
+    .button-active {
+        background: rgba(167, 139, 250, 0.2) !important; /* purple-400 with opacity */
+        color: #fff !important;
+        border-color: #a78bfa !important;
+        box-shadow: 0 0 15px rgba(167, 139, 250, 0.6), inset 0 0 10px rgba(167, 139, 250, 0.2) !important;
+    }
